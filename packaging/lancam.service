@@ -1,0 +1,23 @@
+# User service for the control panel. Nothing is captured until a client
+# starts a stream, and Stop releases the camera and microphone again. The
+# web UI counts as a client, and so does anything else speaking the /api
+# REST endpoints.
+#
+# Install:
+#   cargo build --release
+#   sudo install -m 755 target/release/lancam /usr/local/bin/
+#   mkdir -p ~/.config/systemd/user
+#   cp packaging/lancam.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now lancam
+
+[Unit]
+Description=lancam webcam-to-NDI control service (idle until started)
+After=network.target avahi-daemon.service pipewire.socket
+
+[Service]
+ExecStart=/usr/local/bin/lancam ui --host 127.0.0.1 --port 8765
+Restart=on-failure
+
+[Install]
+WantedBy=default.target
