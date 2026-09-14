@@ -18,10 +18,40 @@ cargo build --release
 
 Runtime requirements:
 
-- `libndi.so.6` from the NDI SDK 6. On Arch, `yay -S ndi-sdk`.
+- NDI SDK 6, installed separately as described below. lancam dlopens
+  `libndi.so.6` and ships none of it.
 - `avahi-daemon` running, for NDI discovery.
 - `alsa-lib` for ALSA audio, and `pipewire` (`pw-dump`, `pw-cat`) for
   PipeWire audio targets.
+
+## Installing the NDI SDK
+
+The SDK is free but proprietary, and its license expects each user to install
+it themselves, so lancam never bundles it.
+
+Arch and derivatives:
+
+```sh
+yay -S ndi-sdk
+```
+
+This unpacks the official installer and places the library in `/usr/lib`,
+where the dynamic loader finds it.
+
+On other Linux distributions, download the SDK from
+https://ndi.video/for-developers/ndi-sdk/ (accept the EULA), then:
+
+```sh
+tar xf Install_NDI_SDK_v6_Linux.tar.gz
+sh Install_NDI_SDK_v6_Linux.sh
+# the installer defaults to "$HOME/NDI SDK for Linux"; expose the library:
+sudo install -m 755 "$HOME/NDI SDK for Linux/lib/x86_64-linux-gnu/libndi.so.6."* /usr/local/lib/
+sudo ldconfig
+```
+
+Verify with `ldconfig -p | grep libndi`. If you keep the SDK in another
+directory instead, list that directory in `/etc/ld.so.conf.d/` and run
+`ldconfig`, or export `LD_LIBRARY_PATH` for the lancam process.
 
 ## Usage
 
@@ -100,21 +130,32 @@ the first device and to video-only.
 
 ## Run as a user service
 
-`packaging/lancam.service` runs the control panel as an idle user service.
-Nothing is captured until a client starts a stream, and Stop releases the
-camera and microphone again. The panel's REST endpoints (`/api/devices`,
-`/api/audio`, `/api/start`, `/api/stop`, `/api/state`, `/api/levels`) are
-open to other controllers too. `lancam tray` is one such controller: a
-StatusNotifierItem that shows the service state and can start or stop the
-last used settings.
+Two units ship in `packaging/`. `lancam.service` runs the control panel
+headless. It can start at boot, captures nothing until a client asks, and
+releases camera and microphone on Stop. `lancam-tray.service` adds the
+systray icon. It needs a desktop session, so it joins your login rather
+than boot.
 
 ```sh
 cargo build --release
 sudo install -m 755 target/release/lancam /usr/local/bin/
 mkdir -p ~/.config/systemd/user
-cp packaging/lancam.service ~/.config/systemd/user/
+cp packaging/lancam.service packaging/lancam-tray.service ~/.config/systemd/user/
 systemctl --user daemon-reload
 systemctl --user enable --now lancam
+systemctl --user enable --now lancam-tray
+loginctl enable-linger $USER    # start lancam at boot, before any login
+```
+
+The panel's REST endpoints (`/api/devices`, `/api/audio`, `/api/start`,
+`/api/stop`, `/api/state`, `/api/levels`) are open to other controllers;
+the tray is one client among possible others.
+
+After rebuilding, refresh the installed binary and restart both units:
+
+```sh
+sudo install -m 755 target/release/lancam /usr/local/bin/
+systemctl --user restart lancam lancam-tray
 ```
 
 For a service that always captures, point `ExecStart` at plain `lancam`
@@ -140,4 +181,4 @@ GPL-3.0-or-later. See `LICENSE`.
 NDI® is a registered trademark of Vizrt NDI AB. This project is not
 affiliated with or endorsed by Vizrt. It requires the separately licensed
 NDI SDK (https://ndi.video) at runtime. The SDK is not redistributed here;
-install it yourself.
+see "Installing the NDI SDK" above.

@@ -1,0 +1,20 @@
+# Systray controller. Needs a desktop session (D-Bus + StatusNotifier
+# watcher), so it joins graphical-session.target rather than booting with
+# the headless lancam.service.
+#
+# Install:
+#   cp packaging/lancam-tray.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now lancam-tray
+
+[Unit]
+Description=lancam systray controller
+PartOf=graphical-session.target
+After=graphical-session.target lancam.service
+
+[Service]
+ExecStart=/usr/local/bin/lancam tray
+Restart=on-failure
+
+[Install]
+WantedBy=graphical-session.target
