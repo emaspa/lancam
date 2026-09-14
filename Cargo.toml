@@ -3,6 +3,7 @@ name = "lancam"
 version = "0.1.0"
 edition = "2021"
 description = "Serve your webcam and any audio as an NDI stream on the local network"
+license = "GPL-3.0-or-later"
 
 [dependencies]
 anyhow = "1"

@@ -43,7 +43,7 @@ jobs:
           mkdir -p "dist/$name/packaging"
           cp "target/$TARGET/release/lancam" "dist/$name/"
           cp packaging/lancam.service "dist/$name/packaging/"
-          cp README.md "dist/$name/"
+          cp README.md LICENSE "dist/$name/"
           tar -czf "$name.tar.gz" -C dist "$name"
           echo "name=$name" >> "$GITHUB_OUTPUT"
 

@@ -132,3 +132,12 @@ with the flags you want.
   skips them and falls back to the closest decodable mode.
 - **One owner per camera.** The camera stays open for the life of the
   process. Stop lancam before using the webcam elsewhere.
+
+## License
+
+GPL-3.0-or-later. See `LICENSE`.
+
+NDI® is a registered trademark of Vizrt NDI AB. This project is not
+affiliated with or endorsed by Vizrt. It requires the separately licensed
+NDI SDK (https://ndi.video) at runtime. The SDK is not redistributed here;
+install it yourself.
