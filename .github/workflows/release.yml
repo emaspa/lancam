@@ -11,6 +11,7 @@ permissions:
 
 env:
   TARGET: x86_64-unknown-linux-gnu
+  TARGET_LABEL: x86_64-linux
 
 jobs:
   build:
@@ -38,7 +39,7 @@ jobs:
           else
             version=$(cargo metadata --format-version 1 --no-deps | jq -r '.packages[0].version')
           fi
-          name="lancam-${version}-${TARGET}"
+          name="lancam-${version}-${TARGET_LABEL}"
           # keep packaging/lancam.service where the README says it is
           mkdir -p "dist/$name/packaging"
           cp "target/$TARGET/release/lancam" "dist/$name/"
