@@ -18,13 +18,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # alsa-sys links against libasound via pkg-config
+      - run: sudo apt-get update && sudo apt-get install -y libasound2-dev
+
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: x86_64-unknown-linux-gnu
 
       - uses: Swatinem/rust-cache@v2
 
-      # libndi is dlopen'd at runtime, so the build needs nothing but the toolchain.
+      # no NDI SDK needed: libndi is dlopen'd at runtime
       - run: cargo build --release --target "$TARGET"
 
       - name: Package tarball
