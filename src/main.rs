@@ -4,6 +4,7 @@ mod audio;
 mod capture;
 mod engine;
 mod ndi;
+mod tray;
 mod web;
 
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -39,6 +40,13 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Cmd {
+    /// Run a systray controller for a running `lancam ui` service
+    Tray {
+        /// Port of the service to control
+        #[arg(long, default_value_t = 8765)]
+        port: u16,
+    },
+
     /// Run the web control panel instead of streaming directly
     Ui {
         /// Bind address
@@ -323,6 +331,13 @@ fn main() -> std::process::ExitCode {
     unsafe { libc::signal(libc::SIGPIPE, libc::SIG_DFL) };
     let cli = Cli::parse();
     match &cli.cmd {
+        Some(Cmd::Tray { port }) => match tray::run(*port) {
+            Ok(()) => std::process::ExitCode::SUCCESS,
+            Err(e) => {
+                eprintln!("ERROR: {e}");
+                std::process::ExitCode::FAILURE
+            }
+        },
         Some(Cmd::Ui {
             host,
             port,

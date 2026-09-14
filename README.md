@@ -48,6 +48,11 @@ lancam --list
 lancam ui                 # http://127.0.0.1:8765
 lancam ui --host 0.0.0.0  # expose on the LAN (the panel can start streams!)
 
+# systray controller for a running service: state icon, go live, stop,
+# open the panel. Needs a desktop with StatusNotifierItem support (KDE,
+# or GNOME with the AppIndicator extension).
+lancam tray
+
 # detach into the background (works for `ui` and for headless streaming):
 # pid file and log land in $XDG_RUNTIME_DIR (or ~/.local/state/lancam)
 lancam ui --background
@@ -99,7 +104,9 @@ the first device and to video-only.
 Nothing is captured until a client starts a stream, and Stop releases the
 camera and microphone again. The panel's REST endpoints (`/api/devices`,
 `/api/audio`, `/api/start`, `/api/stop`, `/api/state`, `/api/levels`) are
-open to other controllers too, so a systray app can drive the same service.
+open to other controllers too. `lancam tray` is one such controller: a
+StatusNotifierItem that shows the service state and can start or stop the
+last used settings.
 
 ```sh
 cargo build --release
