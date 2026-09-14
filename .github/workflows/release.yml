@@ -1,0 +1,56 @@
+name: release
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  TARGET: x86_64-unknown-linux-gnu
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-linux-gnu
+
+      - uses: Swatinem/rust-cache@v2
+
+      # libndi is dlopen'd at runtime, so the build needs nothing but the toolchain.
+      - run: cargo build --release --target "$TARGET"
+
+      - name: Package tarball
+        id: package
+        run: |
+          if [ "$GITHUB_REF_TYPE" = tag ]; then
+            version="${GITHUB_REF_NAME#v}"
+          else
+            version=$(cargo metadata --format-version 1 --no-deps | jq -r '.packages[0].version')
+          fi
+          name="lancam-${version}-${TARGET}"
+          # keep packaging/lancam.service where the README says it is
+          mkdir -p "dist/$name/packaging"
+          cp "target/$TARGET/release/lancam" "dist/$name/"
+          cp packaging/lancam.service "dist/$name/packaging/"
+          cp README.md "dist/$name/"
+          tar -czf "$name.tar.gz" -C dist "$name"
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.package.outputs.name }}
+          path: ${{ steps.package.outputs.name }}.tar.gz
+
+      - name: Create release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" --generate-notes "${{ steps.package.outputs.name }}.tar.gz"
